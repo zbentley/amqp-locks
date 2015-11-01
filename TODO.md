@@ -1,3 +1,15 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [Documentation](#documentation)
+  - [Reliability section rough draft](#reliability-section-rough-draft)
+- [Prover](#prover)
+- [Guidelines](#guidelines)
+- [Research](#research)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Documentation
 - Clarify/document at-least-once versus at-most-once decrement reliability guarantees.
 - Documentation builder with TOC generator, reponame substituter?.
@@ -8,7 +20,7 @@
 - "See also" section additions.
 - Github local-repo anchors?s.
 
-#### Reliability section rough draft
+## Reliability section rough draft
 
 Existing lock implementations rely on message delivery to the client. This causes problems if the network connection is broken between the client and RabbitMQ; without heartbeats or other AMQP operations on the connection, a client cannot easily verify that its lock is still held.
 

@@ -1,8 +1,33 @@
 # Persistent Semaphore
 
-A persistent semaphore is a multi-slot lock with the number of possible available slots persistent in RabbitMQ, in which each slot can only be held by one client. It is implemented using pairs of queues; persistent `A` queues (which represent persistent semaphore "slots"), and exclusive/transient `B` queues, which represent lock holders:
+A persistent semaphore is a multi-slot lock with the number of possible available slots persistent in RabbitMQ, in which each slot can only be held by one client. It is implemented using pairs of queues; persistent `A` queues (which represent persistent semaphore "slots"), and exclusive/transient `B` queues, which represent lock holders.
 
-## "A" and "B" Queues
+# Contents
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- ["A" and "B" Queues](#a-and-b-queues)
+- [Determining Queue Existence:](#determining-queue-existence)
+- [Determining the Maximum Number of Slots](#determining-the-maximum-number-of-slots)
+- [Lock Administration](#lock-administration)
+	- [Creating the Semaphore](#creating-the-semaphore)
+	- [Destroying the Semaphore](#destroying-the-semaphore)
+	- [Adding Slots](#adding-slots)
+	- [Removing Slots](#removing-slots)
+	- [Waiting on Lock Holders](#waiting-on-lock-holders)
+	- [Note on Linear Ordering/"Swiss Cheese Semaphores""](#note-on-linear-orderingswiss-cheese-semaphores)
+	- [Administration Mutex](#administration-mutex)
+	- [Overshooting](#overshooting)
+- [Lock Clients](#lock-clients)
+	- [Acquiring a Lock](#acquiring-a-lock)
+	- [Verifying a Held Lock](#verifying-a-held-lock)
+	- [Relinquishing a Lock](#relinquishing-a-lock)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
+# "A" and "B" Queues
 
 A persistent semaphore is defined as a group of queues such that, given a semaphore name `N`, and a number of slots `C`, members of three sets of queues may exist in RabbitMQ:
 
@@ -12,19 +37,19 @@ A persistent semaphore is defined as a group of queues such that, given a semaph
 
 `A` and `B` queue set members are represented in array-like notation (e.g. `A[2]` for `N-2-A`) in the rest of this document.
 
-## Determining Queue Existence:
+# Determining Queue Existence:
 Queue existence can be determined by publishing (with confirms) to a queue or by passively declaring it.
 
 Publishes are recommended to determine the max, as passive queue declaration's failure mode is a channel-breaking error, which would then necessitate that the lock administrator hold open two channels: one for the administration mutex and one to probe the maximum count.
 
 Note that this does not guarantee queue identity in more than name; two publishes to queue `Q` may arrive at two different incarnations of a queue by that name.
 
-## Determining the Maximum Number of Slots
+# Determining the Maximum Number of Slots
 
 Lock administrators can determine the maximum number of slots on a semaphore `N` by checking the existence of all `A` queues of the semaphore *in order*. When the first NO_ROUTE or NOT_FOUND occurs, the highest numbered routable queue is represents the maximum of the semaphore.
 
 
-## Lock Administration
+# Lock Administration
 
 
 #### Creating the Semaphore
@@ -33,7 +58,7 @@ To create a semaphore, a lock administrator should create all of the `A` queues 
 #### Destroying the Semaphore
 An administrator can destroy a semaphore by determining the maximum value `C` of the semaphore, and then deleting `A` queues in *descending* order from `C` to `0`.
 
-- For alternatives to descending order, see the "Swiss Cheese Semaphores" section.
+For alternatives to descending order, see the "Swiss Cheese Semaphores" section.
 
 #### Adding Slots
 Adding some number `X` of slots to a semaphore consists of determining the maximum value `C` of the semaphore and then declaring the `A` queue for `C + X`.
@@ -59,7 +84,7 @@ Before all administrative actions, the lock administrator must acquire a mutex t
 Creation, addition, and deletion operations may choose to "overshoot" the determined-max value `C` of the semaphore by some amount `T`, and (idempotently, if using RabbitMQ 3 or later) delete all `A` queues found between `C` and `C + T`. This copes with some "unexpected" scenarios (multiple semaphores with different implementations/administration queues, strange broker corruption/failures, manual/external queue deletion, and so on).
 
 
-### Lock Clients
+# Lock Clients
 
 #### Acquiring a Lock
 

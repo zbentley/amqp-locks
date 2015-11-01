@@ -1,4 +1,4 @@
-# Limitations of Receive-Based Locking
+# Overview
 
 The excellent [semaphores in RabbitMQ](https://www.rabbitmq.com/blog/2014/02/19/distributed-semaphores-with-rabbitmq/) article proposes a way to implement a semaphore in RabbitMQ. *That semaphore is likely faster than the ones provided by [amqp-locks](https://github.com/zbentley/amqp-locks)*, as it uses AMQP consumers to hold locks, rather than RPC operations.
 
@@ -6,7 +6,24 @@ As this amqp-locks and its associated client implementations leave the work-in-p
 
 There are several drawbacks to using unacked messages/message-receive operations as the core of a RabbitMQ-based locking scheme. Those drawbacks are listed below.
 
-### Hard to Administer
+# Contents
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [Limitations of Receive-Based Locking](#limitations-of-receive-based-locking)
+	- [Hard to Administer](#hard-to-administer)
+	- [Greedy](#greedy)
+	- [Hard to Verify](#hard-to-verify)
+	- [Hard to Measure](#hard-to-measure)
+	- [Expensive to Fail to Acquire Lock](#expensive-to-fail-to-acquire-lock)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# Limitations of Receive-Based Locking
+
+#### Hard to Administer
 
 Unacked-message-based semaphore operations make it easy to add lock slots to the system; simply publish more messages into the semaphore queue. However, decrementing the number of lock slots is not as easy. To quote [the original article](https://www.rabbitmq.com/blog/2014/02/19/distributed-semaphores-with-rabbitmq/) on the subject:
 
@@ -20,7 +37,7 @@ Administering [amqp-locks](https://github.com/zbentley/amqp-locks) locks, on the
 
 Using [amqp-locks](https://github.com/zbentley/amqp-locks) locks, it is also possible for a lock administrator to wait until a newly-created lock slot is taken, or for it to wait until another client releases a lock that is in the process of being decremented.
 
-### Greedy
+#### Greedy
 
 Using receive-based locking, if a client wants a lock, it allows flow on its consuming channel (or sets QoS), and tries to receive a message. If receive is non-blocking (e.g. a `select` with a 0 timeout on the socket), a lock consumer can buffer messages in the background without explicitly acquiring the lock. Since locally buffered messages are unavailable to other lock clients, the situation of "start consuming lock queue; try to get lock (fail); do *time-consuming operation*; try to get lock (success)" results in a lock being unavailable to other clients, but unknown by the client that will eventually hold it, for the duration of *time-consuming operation*.
 
@@ -28,7 +45,7 @@ This can be remedied by making receive a blocking operation (which is not always
 
 [amqp-locks](https://github.com/zbentley/amqp-locks) implementations, on the other hand, use publishes and RPC actions without state (no local receive queue "stealing" messages) to acquire locks. While waiting on messages via receive is almost certainly faster than [amqp-locks](https://github.com/zbentley/amqp-locks)'s strategy, lock-acquire attempts with [amqp-locks](https://github.com/zbentley/amqp-locks) cannot cause hidden lock unavailability to other clients based on previous acquire attempts.
 
-### Hard to Verify
+#### Hard to Verify
 
 When using unacked messages as indicators of held locks, it is difficult to verify that a lock is still held. Without heartbeats (which may not be available in many synchronous/single threaded AMQP clients, especially those which need to hold a lock for a long/highly variable time), verifying that a lock is still held requires another AMQP operation to be conducted on the original semaphore's connection to verify its aliveness. Since exclusive consumption of a queue is not idempotent, some other operation must be used. This requires driver support for multiple channels and/or frame multiplexing, since the response for the "other operation" might end up behind another frame (data or OOB message like connection.close)from the server. Such driver features may not always be present.
 
@@ -36,12 +53,12 @@ If a lock is decremented or centrally destroyed, there is no easy way for consum
 
 Both the "is the connection still alive?" and "does the lock still exist?"  questions (but not the "has the lock been decremented?" question) can be answered by issuing a passive queue.declare statement for the original lock queue on the lock-holding channel. While this still requires multiplexed driver support, it does not require multichannel support.
 
-### Hard to Measure
+#### Hard to Measure
 
 Using unacknowledged messages, it is hard-nee-imposible without an HTTP/management operation to determine how many slots exist on a lock when one or more slot is held by a client (as was done in [this implementation](https://github.com/pythonishvili/rabbit-semaphore) of consume-based locking). Since consumers disappear from the value returned by basic.queue_declare when their QoS/local buffer is full, the number of unacknowledged messages is not available to lock administrators.
 
 [amqp-locks](https://github.com/zbentley/amqp-locks) implementations can check the size of a properly structured semaphore by simply issuing basic.publish operations to each slot's persistent queue in order, and recording the count at which operations started failing. This counting operation can be wrapped in a lock-administration mutex in order to prevent race conditions in which counts are externally changed by incrementing or decrementing semaphores.
 
-### Expensive to fail to acquire lock
+#### Expensive to Fail to Acquire Lock
 
 In a consume based lock implementation, if the desired lock does not exist at all, an attempt to consume from the lock queue will fail such that the channel must be reopened. This is expensive relative to simpler operations ([amqp-locks](https://github.com/zbentley/amqp-locks) uses a publish and a confirm) and requires multiple RPC operations.

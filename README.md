@@ -1,6 +1,3 @@
-# Disclaimer/WIP/Mea Culpa
-This project is ***brand new, unfinished, and a known-to-be-sketchy work-in-progress***. Don't use or take anything here as gospel; I'm still experimenting with implementations (and don't have a prover to make sure they're correct yet), so it's all subject to change. For planned research/changes, see [TODO](TODO.md).
-
 # Project Overview
 
 [amqp-locks](https://github.com/zbentley/amqp-locks) is a set of guidelines for implementing several types of lock primitive using [RabbitMQ](https://www.rabbitmq.com/).
@@ -11,14 +8,37 @@ This project is ***brand new, unfinished, and a known-to-be-sketchy work-in-prog
 - A list of implementations of those guidelines. 
 - A set of proof tools to verify that a given implementation meets the requirements, in terms of correctness and efficiency.
 
+# Contents
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Disclaimer/WIP/Mea Culpa](#disclaimerwipmea-culpa)
+- [Implementations](#implementations)
+    - [Completed](#completed)
+    - [Unfinished](#unfinished)
+- [Project Goals](#project-goals)
+	- [Lock Types](#lock-types)
+	- [Lock Requirements](#lock-requirements)
+	- [Limitation Tolerance](#limitation-tolerance)
+- [Limitations of Existing Approaches](#limitations-of-existing-approaches)
+	- [More Info](#more-info)
+- [Non-RabbitMQ AMQP brokers](#non-rabbitmq-amqp-brokers)
+- [Additional Resources](#additional-resources)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# Disclaimer/WIP/Mea Culpa
+This project is ***brand new, unfinished, and a known-to-be-sketchy work-in-progress***. Don't use or take anything here as gospel; I'm still experimenting with implementations (and don't have a prover to make sure they're correct yet), so it's all subject to change. For planned research/changes, see [TODO](TODO.md).
+
 # Implementations
 
 There will eventually be more than one client implementation of the locking schemes defined by amqp-locks. Implementations (or attempts at implementations) will be listed here.
 
-### Completed
+#### Completed
 None yet.
 
-### Unfinished
+#### Unfinished
 - [amqp-locks-python](https://github.com/zbentley/amqp-locks-python): a Python implementation of amqp-locks.
 	- Without a prover, the "finished"-ness of this project cannot be measured. When I finish adding a prover to the main amqp-locks project, I'll measure the correctness of the Python implementation.
 
