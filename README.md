@@ -1,5 +1,5 @@
 # Disclaimer/WIP/Mea Culpa
-This project is ***brand new, unfinished, and a known-to-be-problematic work-in-progress***. Don't use or take anything here as gospel; I'm still experimenting with implementations (and don't have a prover to make sure they're correct yet), so it's all subject to change. For planned research/changes, see [[TODO]]. To contribute, see [[CONTRIBUTING]].
+This project is ***brand new, unfinished, and a known-to-be-problematic work-in-progress***. Don't use or take anything here as gospel; I'm still experimenting with implementations (and don't have a prover to make sure they're correct yet), so it's all subject to change. For planned research/changes, see [TODO](TODO.md).
 
 # Project Overview
 
@@ -14,7 +14,7 @@ Implementations of these guidelines are available are available elsewhere (see t
 #### Lock Types
 [amqp-locks](https://github.com/zbentley/amqp-locks) implementations should provide three (well, two and a subtype) kinds of locks. Each type is summarized below, with a link to more detailed documentation for the guidelines of implementation behavior for each type.
 
-- [[A non-persistent mutex]]. This is a named mutex whose availability is contingent _only_ on  the availability of RabbitMQ and whether or not the lock is already held.
+- [A non-persistent mutex](Documentation/Lock Types/True Mutex.md), or "true mutex". This is a named mutex whose availability is contingent _only_ on  the availability of RabbitMQ and whether or not the lock is already held.
 - [[A persistent semaphore]]. This is a semaphore with an externally managed number of slots. Clients can hold locks, each of which consumes one slot. The number of slots can be centrally changed such that additional slots can be made available, or existing slots can be removed. If slots with held locks are removed, their lock holders will release them the next time they poll/verify their locks. Until a slot is released by a client, it cannot be claimed by another client, regardless of changes in the number of slots.
 - [[An persistent mutex]]. This is a named mutex whose availability is contingent on the availability of RabbitMQ, whether or not the mutex has been centrally enabled, and whether or not the lock is already held. This is really just an administerable semaphore with a single slot (which allows for slightly simpler/cheaper operations than a full semaphore).
 
