@@ -41,7 +41,7 @@ Adding some number `X` of slots to a semaphore consists of determining the maxim
 #### Removing Slots
 Removing some number `X` slots from a semaphore consists of determining the maximum value `C` of the semaphore, and then deleting `A` queues in *descending* order from `C` to `max(0, C - X)`.
 
-- Node that ***decrementing the available slots on a semaphore does not affect any lock clients that have acquired the slots being decremented.*** A client holding a decremented slot *must* voluntarily relinquish its slot (cleanly or by crashing) for the decrement operation to be complete. This is the largest limitation of REPONAME's implementation of a persistent semaphore.
+- Node that ***decrementing the available slots on a semaphore does not affect any lock clients that have acquired the slots being decremented.*** A client holding a decremented slot *must* voluntarily relinquish its slot (cleanly or by crashing) for the decrement operation to be complete. This is the largest limitation of [amqp-locks](https://github.com/zbentley/amqp-locks)'s implementation of a persistent semaphore.
 - For alternatives to descending order, see the "Swiss Cheese Semaphores" section.
 - It is imperative that clients wait for the delete-ok message from the broker before continuing on to remove the next queue.
 

@@ -1,6 +1,6 @@
 # Limitations of Receive-Based Locking
 
-The excellent [semaphores in RabbitMQ](https://www.rabbitmq.com/blog/2014/02/19/distributed-semaphores-with-rabbitmq/) article proposes a way to implement a semaphore in RabbitMQ. *That semaphore is likely faster than the ones provided by REPONAME*, as it uses AMQP consumers to hold locks, rather than RPC operations. As this repo and its associated client implementations leave the work-in-progress stage, I will make performance benchmarks that put that assumption to the test. 
+The excellent [semaphores in RabbitMQ](https://www.rabbitmq.com/blog/2014/02/19/distributed-semaphores-with-rabbitmq/) article proposes a way to implement a semaphore in RabbitMQ. *That semaphore is likely faster than the ones provided by [amqp-locks](https://github.com/zbentley/amqp-locks)*, as it uses AMQP consumers to hold locks, rather than RPC operations. As this repo and its associated client implementations leave the work-in-progress stage, I will make performance benchmarks that put that assumption to the test. 
 
 There are several drawbacks to using unacked messages/message-receive operations as the core of a RabbitMQ-based locking scheme. Those drawbacks are listed below.
 
@@ -14,9 +14,9 @@ This requires consumer priorities (a recent RabbitMQ feature), or some separate 
 
 Even once a decrement operation is confirmed necessary (by receiving, but not acking, a decrement message), the process of decrementing a semaphore on the client is far from simple: the original lock channel has to be blocked by channel.flow, or have its QoS reduced so that acknowledging the already-held lock message doesn't allow another one to be queued. Then, both the decrement-request and the original lock message have to be acknowleded. Depending on the order of the acknowledgements, a failure of either one can cause false decrement success (lock is still at previous level), or false decrement failure (lock is decremented, but decrement request is still pending).
 
-Administering REPONAME locks, on the other hand, is trivial: a mutex (itself a REPONAME lock) is acquired to prevent duplicate administration operations, and then lock slots are created or destroyed as queue.declare or queue.delete operations. Since those operations are both idempotent (unlike consume and publish), it is even possible to cope with situations where the broker goes down after successfully declaring/deleting a queue, but before the "declare/delete ok" message is sent to the lock administrator client.
+Administering [amqp-locks](https://github.com/zbentley/amqp-locks) locks, on the other hand, is trivial: a mutex (itself a [amqp-locks](https://github.com/zbentley/amqp-locks) lock) is acquired to prevent duplicate administration operations, and then lock slots are created or destroyed as queue.declare or queue.delete operations. Since those operations are both idempotent (unlike consume and publish), it is even possible to cope with situations where the broker goes down after successfully declaring/deleting a queue, but before the "declare/delete ok" message is sent to the lock administrator client.
 
-Using REPONAME locks, it is also possible for a lock administrator to wait until a newly-created lock slot is taken, or for it to wait until another client releases a lock that is in the process of being decremented.
+Using [amqp-locks](https://github.com/zbentley/amqp-locks) locks, it is also possible for a lock administrator to wait until a newly-created lock slot is taken, or for it to wait until another client releases a lock that is in the process of being decremented.
 
 ## Greedy
 
@@ -24,7 +24,7 @@ Using receive-based locking, if a client wants a lock, it allows flow on its con
 
 This can be remedied by making receive a blocking operation (which is not always desirable, especially in clients without threads/concurrency systems), or by turning flow/QoS on and off on either side of a lock-acquire attempt. That's expensive in terms of time and broker operations; in the failed-to-acquire case, two RPC actions (flow on, flow off) are necessary to poll for a message, and a timeout is still needed to robustly check for a lock, as the broker can't be counted on to deliver a message to a consumer as soon as flow is enabled.
 
-REPONAME implementations, on the other hand, use publishes and RPC actions without state (no local receive queue "stealing" messages) to acquire locks. While waiting on messages via receive is almost certainly faster than REPONAME's strategy, lock-acquire attempts with REPONAME cannot cause hidden lock unavailability to other clients based on previous acquire attempts.
+[amqp-locks](https://github.com/zbentley/amqp-locks) implementations, on the other hand, use publishes and RPC actions without state (no local receive queue "stealing" messages) to acquire locks. While waiting on messages via receive is almost certainly faster than [amqp-locks](https://github.com/zbentley/amqp-locks)'s strategy, lock-acquire attempts with [amqp-locks](https://github.com/zbentley/amqp-locks) cannot cause hidden lock unavailability to other clients based on previous acquire attempts.
 
 ## Hard to Verify
 
@@ -38,8 +38,8 @@ Both the "is the connection still alive?" and "does the lock still exist?"  ques
 
 Using unacknowledged messages, it is hard-nee-imposible without an HTTP/management operation to determine how many slots exist on a lock when one or more slot is held by a client. Since consumers disappear from the value returned by basic.queue_declare when their QoS/local buffer is full, the number of unacknowledged messages is not available to lock administrators.
 
-REPONAME implementations can check the size of a properly structured semaphore by simply issuing basic.publish operations to each slot's persistent queue in order, and recording the count at which operations started failing. This counting operation can be wrapped in a lock-administration mutex in order to prevent race conditions in which counts are externally changed by incrementing or decrementing semaphores.
+[amqp-locks](https://github.com/zbentley/amqp-locks) implementations can check the size of a properly structured semaphore by simply issuing basic.publish operations to each slot's persistent queue in order, and recording the count at which operations started failing. This counting operation can be wrapped in a lock-administration mutex in order to prevent race conditions in which counts are externally changed by incrementing or decrementing semaphores.
 
 ## Expensive to fail to acquire lock
 
-In a consume based lock implementation, if the desired lock does not exist at all, an attempt to consume from the lock queue will fail such that the channel must be reopened. This is expensive relative to simpler operations (REPONAME uses a publish and a confirm) and requires multiple RPC operations.
+In a consume based lock implementation, if the desired lock does not exist at all, an attempt to consume from the lock queue will fail such that the channel must be reopened. This is expensive relative to simpler operations ([amqp-locks](https://github.com/zbentley/amqp-locks) uses a publish and a confirm) and requires multiple RPC operations.
