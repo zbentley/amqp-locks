@@ -11,6 +11,19 @@ This project is ***brand new, unfinished, and a known-to-be-sketchy work-in-prog
 - A list of implementations of those guidelines. 
 - A set of proof tools to verify that a given implementation meets the requirements, in terms of correctness and efficiency.
 
+# Implementations
+
+There will eventually be more than one client implementation of the locking schemes defined by amqp-locks. Implementations (or attempts at implementations) will be listed here.
+
+### Completed
+None yet.
+
+### Unfinished
+- [amqp-locks-python](https://github.com/zbentley/amqp-locks-python): a Python implementation of amqp-locks.
+	- Without a prover, the "finished"-ness of this project cannot be measured. When I finish adding a prover to the main amqp-locks project, I'll measure the correctness of the Python implementation.
+
+# Project Goals
+
 #### Lock Types
 [amqp-locks](https://github.com/zbentley/amqp-locks) implementations should provide three (well, two and a subtype) kinds of locks. Each type is summarized below, with a link to more detailed documentation for the guidelines of implementation behavior for each type.
 
@@ -40,10 +53,8 @@ Locks should be able to operate in constrained situations, such as:
 		- basic.queue_delete
 		- basic.queue_declare and exclusive queues.
 	- Drivers do not need to support consumtion (of any kind), heartbeats, or other features in order to be used for [amqp-locks](https://github.com/zbentley/amqp-locks) implementations. In the future, it may be possible to use AMQP transactions instead of publisher confirms in some cases, which would allow the use of non-RabbitMQ AMQP brokers.
-
 - Limited concurrency support in the client: not all lock clients have a concurrency system; many are single-threaded, non-multiplexed/evented processes. This limits the usefulness or availability of AMQP heartbeats, and makes it harder to reason about locking schemes that rely on AMQP message delivery.
 
-# Implementations
 
 # Limitations of Existing Approaches
 
@@ -66,4 +77,4 @@ At present, many of the locking semantics in [amqp-locks](https://github.com/zbe
 - [Original (consume-based) semaphore proposal](https://www.rabbitmq.com/blog/2014/02/19/distributed-semaphores-with-rabbitmq/). 
 - Aphyr's [article on reliability of RabbitMQ-backed semaphores](https://aphyr.com/posts/315-call-me-maybe-rabbitmq) (amqp-lock implementations probably do not provide reliability in excess of his criticisms).
 	- Also see the twitter [discussion](https://twitter.com/aphyr/status/436610754083815425) on the same topic.
-- Pythonishvili's [implementation of the original consume-based semaphore](https://github.com/pythonishvili/rabbit-semaphore/blob/master/semaphore.py).
+- Pythonishvili's [implementation of the original consume-based semaphore](https://github.com/pythonishvili/rabbit-semaphore).
