@@ -47,13 +47,13 @@ None yet.
 #### Lock Types
 [amqp-locks](https://github.com/zbentley/amqp-locks) implementations should provide three (well, two and a subtype) kinds of locks. Each type is summarized below, with a link to more detailed documentation for the guidelines of implementation behavior for each type.
 
-1. [A non-persistent mutex](Documentation/Lock Types/True Mutex.md), or "true mutex". This is a named mutex whose availability is contingent _only_ on  the availability of RabbitMQ and whether or not the lock is already held.
-2. [A persistent semaphore](Documentation/Lock Types/Persistent Semaphore.md). This is a semaphore with an externally managed number of slots. Clients can hold locks, each of which consumes one slot. The number of slots can be centrally changed such that additional slots can be made available, or existing slots can be removed. If slots with held locks are removed, their lock holders will release them the next time they poll/verify their locks. Until a slot is released by a client, it cannot be claimed by another client, regardless of changes in the number of slots.
+1. [A non-persistent mutex](Documentation/Lock%20Types/True%20Mutex.md), or "true mutex". This is a named mutex whose availability is contingent _only_ on  the availability of RabbitMQ and whether or not the lock is already held.
+2. [A persistent semaphore](Documentation/Lock%20Types/Persistent%20Semaphore.md). This is a semaphore with an externally managed number of slots. Clients can hold locks, each of which consumes one slot. The number of slots can be centrally changed such that additional slots can be made available, or existing slots can be removed. If slots with held locks are removed, their lock holders will release them the next time they poll/verify their locks. Until a slot is released by a client, it cannot be claimed by another client, regardless of changes in the number of slots.
 	- The bulk of [amqp-locks](https://github.com/zbentley/amqp-locks) is geared towards providing a correct implementation of this lock type; the other lock types came about as part of my research towards making a proper persistent semaphore.
-3. [A persistent mutex](Documentation/Lock Types/Persistent Mutex.md). This is a named mutex whose availability is contingent on the availability of RabbitMQ, whether or not the mutex has been centrally enabled, and whether or not the lock is already held.
+3. [A persistent mutex](Documentation/Lock%20Types/Persistent%20Mutex.md). This is a named mutex whose availability is contingent on the availability of RabbitMQ, whether or not the mutex has been centrally enabled, and whether or not the lock is already held.
 	- This is really just an administerable semaphore with a single slot (which allows for slightly simpler/cheaper operations than a full semaphore).
 
-Additionally, documentation will be provided (it's still being fleshed out) for [an administerable version of the standard receive/consume-based semaphore implementation](Documentation/Lock Types/[TODO] Non-Persistent Semaphore.md).
+Additionally, documentation will be provided (it's still being fleshed out) for [an administerable version of the standard receive/consume-based semaphore implementation](Documentation/Lock%20Types/[TODO]%20Non-Persistent%20Semaphore.md).
 
 #### Lock Requirements
 Locks provided by [amqp-locks](https://github.com/zbentley/amqp-locks) implementations should be:
